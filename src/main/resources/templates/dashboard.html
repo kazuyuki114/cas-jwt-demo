@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAS JWT Demo - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .json-display {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1>Dashboard</h1>
+                    <div>
+                        <a href="/" class="btn btn-secondary me-2">Home</a>
+                        <a href="/logout" class="btn btn-danger">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-success">
+                    <h5><i class="bi bi-check-circle"></i> Authentication Successful!</h5>
+                    <p class="mb-0">You have successfully authenticated through CAS and received a JWT token.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4" th:if="${jwtData}">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>JWT Token Information (Display Only - Used Once for Authentication)</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info mb-3">
+                            <strong>Note:</strong> This JWT was validated once during login. Your session now handles authentication for all subsequent requests.
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>JWT Header</h5>
+                                <div class="json-display" th:text="${jwtData.header}"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Decrypted Payload</h5>
+                                <div class="json-display" th:text="${jwtData.decryptedPayload != null ? jwtData.decryptedPayload : jwtData.payload}"></div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4" th:if="${jwtData != null and jwtData.containsKey('error')}">
+                            <div class="col-12">
+                                <div class="alert alert-warning">
+                                    <strong>Note:</strong> <span th:text="${jwtData.error}"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h5>Original JWT Token (Kept Intact)</h5>
+                                <div class="json-display" th:text="${originalJwt != null ? originalJwt : jwtData.rawToken}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>How the CAS Logout Works</h5>
+                    </div>
+                    <div class="card-body">
+                        <ol>
+                            <li><strong>User-Initiated Logout:</strong> When you click "Logout from CAS", you'll be redirected to CAS logout page</li>
+                            <li><strong>CAS Central Logout:</strong> CAS will log you out from all connected applications</li>
+                            <li><strong>Back-Channel Logout:</strong> CAS sends logout notifications to all registered services</li>
+                            <li><strong>Service Redirect:</strong> After logout, CAS redirects you back to this application's home page</li>
+                            <li><strong>Session Cleanup:</strong> Your local session is invalidated and you'll need to re-authenticate</li>
+                        </ol>
+
+                        <div class="alert alert-info mt-3">
+                            <h6>CAS Service Configuration:</h6>
+                            <ul class="mb-0">
+                                <li><strong>Service ID:</strong> ^http://localhost:9446/.*</li>
+                                <li><strong>Logout Type:</strong> BACK_CHANNEL</li>
+                                <li><strong>Logout URL:</strong> http://localhost:9446/logout</li>
+                                <li><strong>JWT as Service Ticket:</strong> Enabled</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Authentication Flow Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <ol>
+                            <li>You accessed the home page without authentication</li>
+                            <li>You clicked "Login with CAS" which redirected you to CAS server</li>
+                            <li>After successful authentication, CAS redirected back with a JWT ticket parameter</li>
+                            <li>The application decoded the JWT token and stored it in your session</li>
+                            <li>This dashboard page displays the JWT token information and requires authentication</li>
+                            <li>When you logout, CAS will handle centralized logout across all services</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Session Information (Debug)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Session ID:</strong> <span th:text="${sessionId}"></span></p>
+                                <p><strong>Session Created:</strong> <span th:text="${sessionCreationTime}"></span></p>
+                                <p><strong>Login Time:</strong> <span th:text="${loginTime}"></span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Authentication Method:</strong> Session-based (JWT validated once)</p>
+                                <p><strong>Logout Process:</strong> Click "Logout" to invalidate session and redirect to CAS logout</p>
+                                <p><strong>After Logout:</strong> CAS will redirect you back to the home page</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
